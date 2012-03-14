@@ -1,0 +1,109 @@
+<project name="rtc-ant-macros">
+	<property name="rtc.repositoryAddress" 	value="${repositoryAddress}" />
+	<property name="rtc.userId" 			value="${userId}" />
+	<property name="rtc.password" 			value="${password}" />
+	<property name="rtc.buildResultUUID" 	value="${buildResultUUID}" />
+
+
+	<!-- <rtc-activity  label="Compiling the Jar for ${project.name}." />  -->
+	<macrodef name="rtc-activity">
+		<attribute name="label" default="" />
+		
+		<sequential>
+			<startBuildActivity repositoryAddress="${rtc.repositoryAddress}"	
+			userId="${rtc.userId}" password="${rtc.password}" label="@{label}" autoComplete="true"
+			verbose="true" buildResultUUID="${rtc.buildResultUUID}" />
+		</sequential>
+	</macrodef>
+
+	<!-- <rtc-activity  parent.id="${parentActivityIdPropety}" label="Compiling the Jar for ${project.name}." />  -->
+	<macrodef name="rtc-activity-child">
+		<attribute name="label" default="" />
+		<attribute name="parent.id" default="" />
+
+		<sequential>
+			<startBuildActivity repositoryAddress="${rtc.repositoryAddress}"	
+			userId="${rtc.userId}" password="${rtc.password}" label="@{label}" autoComplete="true"
+			verbose="true" buildResultUUID="${rtc.buildResultUUID}"
+			parentActivityId="@{parent.id}" />
+		</sequential>
+	</macrodef>	
+	
+	<!-- <rtc-start-activity activity.id.property="activityIdProperty" label="Compiling the Jar for ${project.name}." />  -->
+	<macrodef name="rtc-start-activity">
+		<attribute name="activity.id.property" 	default="" />
+		<attribute name="label" 				default="" />
+		
+		<sequential>
+			<startBuildActivity repositoryAddress="${rtc.repositoryAddress}"
+				userId="${rtc.userId}" password="${rtc.password}"
+				activityIdProperty="@{activity.id.property}" label="@{label}" autoComplete="false"
+				verbose="true" buildResultUUID="${rtc.buildResultUUID}" />
+		</sequential>
+	</macrodef>
+	
+	<!-- <rtc-start-activity activity.id.property="activityIdProperty" label="Compiling the Jar for ${project.name}." parent.id="${parentActivityIdPropety}" />  -->	
+	<macrodef name="rtc-start-activity-child">
+		<attribute name="activity.id.property" 	default="" />
+		<attribute name="label" 				default="" />
+		<attribute name="parent.id" 			default="" />
+
+		<sequential>
+			<startBuildActivity repositoryAddress="${rtc.repositoryAddress}"
+				userId="${rtc.userId}" password="${rtc.password}"
+				activityIdProperty="@{activity.id.property}" label="@{label}" autoComplete="false"
+				verbose="true" buildResultUUID="${rtc.buildResultUUID}"
+				parentActivityId="@{parent.id}"/>
+		</sequential>
+	</macrodef>	
+	
+	<!-- <rtc-complete-activity id="${activityIdProperty}" />	-->
+	<macrodef name="rtc-complete-activity">
+		<attribute name="activity.id.property" default="" />
+		<sequential>
+			<completeBuildActivity repositoryAddress="${rtc.repositoryAddress}"
+				userId="${rtc.userId}" password="${rtc.password}" activityId="@{activity.id.property}"
+				verbose="true" buildResultUUID="${rtc.buildResultUUID}" />
+		</sequential>
+	</macrodef>
+	
+<!--	
+	<macrodef name="rtc-team-build">
+		
+	</macrodef>
+-->	
+	
+	<!-- <rtc-accept workspace.name="RTC Build Team Workspace" />	-->	
+<!--
+	<macrodef name="rtc-accept">
+		<attribute name="workspace.name" default="" />
+		<sequential>
+			<tstamp>
+				<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss" />
+			</tstamp>
+
+			<teamAccept repositoryAddress="${rtc.repositoryAddress}"
+				userId="${rtc.userId}" password="${rtc.password}" 
+				workspaceName="@{workspace.name}" verbose="true" buildResultUUID="${rtc.buildResultUuid}"
+				snapshotName="${buildDefinitionId}_${TODAY}" changeSetFile="changes.txt" />
+
+			<workItemPublisher repositoryAddress="${rtc.repositoryAddress}"
+				userId="${rtc.userId}" password="${rtc.password}" buildResultUUID="${rtc.buildResultUuid}"
+				filePath="changes.txt" />
+
+			<delete file="changes.txt" />
+		</sequential>
+	</macrodef>
+-->	
+	
+	<macrodef name="rtc-publish-artifact">
+		<attribute name="file.path" default="" />
+		<attribute name="file.label" default="" />
+		<sequential>
+			<artifactFilePublisher repositoryAddress="${rtc.repositoryAddress}"
+				userId="${rtc.userId}" password="${rtc.password}" buildResultUUID="${rtc.buildResultUUID}"
+				filePath="@{file.path}" label="@{file.label}" />
+		</sequential>
+	</macrodef>
+
+</project>

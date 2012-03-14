@@ -1,0 +1,233 @@
+<project name="generic-build" default="all">
+	<import file="C:\IBM\3011\TeamConcertBuild\buildsystem\buildtoolkit\BuildToolkitTaskDefs.xml" />
+
+	<property name="repositoryAddress" value="https://gebwin7.swilbur.us.ibm.com:9443/ccm" />
+	<property name="userId" value="swilbur" />
+	<property name="password" value="swilbur" />
+	<property name="buildResultUuid" value="${buildResultUUID}" />
+
+	<property name="buildWorkspace" value="Build Toolkit Samples Workspace" />
+	
+	
+	<import file="rtc-ant-macros.xml" />
+
+	<target name="all" depends="test-buildactivity">
+		<echo> Testing out some RTC advanced contributors.</echo>
+	</target>
+
+	<target name="parent">
+		<echo>Parent Task.</echo>
+		<rtc-start-activity activity.id.property="parent" label="Parent Build Activity.." />
+		<rtc-activity-child parent.id="${parent}" label="Calling Child build" />
+		<!--
+		 If the parent is called as a "Personal build" then the team.scm.workspaceUUID must set the
+		 overridePropertiesFile on the requestTeamBuild task.
+		-->
+		<property name="team.scm.workspaceUUID" value="${team.scm.workspaceUUID}" />
+		<requestTeamBuild repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}"
+				                  buildDefinitionId="${child.buildDefinitionId}" 
+								  resultUUIDProperty="child.buildResultUUID" />
+
+		<rtc-start-activity-child activity.id.property="waitForBuild" parent.id="${parent}" label="Waiting for Child build to complete" />
+		<echo> Just set activity to: ${waitForBuild} </echo>
+		
+		<waitForTeamBuild repositoryAddress="${repositoryAddress}"
+		                                   userId="${userId}" 
+		                                   password="${password}" 
+		                                   buildResultUUID="${child.buildResultUUID}"
+		                                   statesToWaitFor="COMPLETED" 
+		                                   verbose="true" 
+		                                   interval="60" 
+		                                   timeout="200"/>
+		
+		<rtc-complete-activity activity.id.property="${waitForBuild}" />
+		
+		<rtc-start-activity-child activity.id.property="linkToChildBuild" parent.id="${parent}" label="Add link to child build." />
+		
+		<linkPublisher repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}"
+				               buildResultUUID="${buildResultUUID}" label="Child Build."
+				               url="${repositoryAddress}/resource/itemOid/com.ibm.team.build.BuildResult/${child.buildResultUUID}" />
+		
+		<waitForTeamBuild repositoryAddress="${repositoryAddress}"
+		                                   userId="${userId}" 
+		                                   password="${password}" 
+		                                   buildResultUUID="${child.buildResultUUID}"
+		                                   statesToWaitFor="COMPLETED" 
+		                                   verbose="true" 
+		                                   interval="1" 
+		                                   timeout="200"/>
+		
+		<rtc-complete-activity activity.id.property="${linkToChildBuild}" />
+			
+<!--		
+		<rtc-start-activity-child activity.id.property="validateChildBuild" parent.id="${parent}" label="Validating and completing Child build." />	
+		<completeTeamBuild repositoryAddress="${repositoryAddress}"
+				                   userId="${userId}"
+				                   password="${password}"
+				                   buildResultUUID="${buildResultUUID}"
+				                   status="OK"
+				                   verbose="true" />
+		<rtc-complete-activity activity.id.property="${validateChildBuild}" />
+-->		
+		<rtc-activity-child parent.id="${parent}" label="test testing" />
+		<sleep seconds="5" />
+		<rtc-activity-child parent.id="${parent}" label="test compiling" />
+		<sleep seconds="5" />
+		<rtc-activity-child parent.id="${parent}" label="test packaging" />
+
+		<rtc-complete-activity activity.id.property="${parent}" />
+	</target>
+	
+	<target name="child">
+		<echo>
+			Child Task.
+		</echo>
+		<sleep seconds="30" />
+	</target>
+	
+	<target name="test-accept" depends="test-accept-macro" />
+	
+	<target name="test-accept-task">
+		<tstamp>
+			<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss" />
+		</tstamp>
+
+		<teamAccept repositoryAddress="${repositoryAddress}"
+			userId="${userId}" password="${password}" 
+			workspaceName="${buildWorkspace}" verbose="true" buildResultUUID="${buildResultUuid}"
+			snapshotName="${buildDefinitionId}_${TODAY}" changeSetFile="changes.txt" />
+
+		<workItemPublisher repositoryAddress="${repositoryAddress}"
+			userId="${userId}" password="${password}" buildResultUUID="${buildResultUuid}"
+			filePath="changes.txt" />
+
+		<delete file="changes.txt" />
+	</target>
+
+	<target name="test-accept-macro">
+		<rtc-activity label="Accepting pending changes into ${buildWorkspace}" />
+		<rtc-accept workspace.name="${buildWorkspace}" />
+	</target>
+	
+	<target name="test-fetch">
+		<teamFetch repositoryAddress="${repositoryAddress}"
+			userId="${userId}" password="${password}"
+			workspaceName="${buildWorkspace}" destination="${fetchDir}"
+			verbose="true" />
+	</target>
+
+
+	<target name="test-buildactivity" depends="test-ba2,test-ba3,test-ba4">
+		<echo> Testing out the standard Build Activity and Parent/Child Build Activity relationships.</echo>
+		<property name="testba" value="" />
+
+		<startBuildActivity label="testba." activityIdProperty="testba" autoComplete="false" verbose="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+
+		<startBuildActivity parentActivityId="${testba}" label="compiling..." autoComplete="true" verbose="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+
+		<sleep seconds="5" />
+
+		<startBuildActivity parentActivityId="${testba}" label="testing..." autoComplete="true" verbose="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+
+		<sleep seconds="5" />
+
+		<startBuildActivity parentActivityId="${testba}" label="packaging..." autoComplete="true" verbose="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+
+		<sleep seconds="5" />
+
+		<completeBuildActivity repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" activityId="${testba}" verbose="true" buildResultUUID="${buildResultUUID}" />
+
+	</target>
+
+	<target name="test-ba2">
+		<echo>Parent activity with children using macros.</echo>
+		<property name="testba2" value="" />
+		<rtc-start-activity activity.id.property="testba2" label="Testing Build Activity Macro 2.." />
+		<rtc-activity-child parent.id="${testba2}" label="test fetching" />
+		<sleep seconds="5" />
+		<rtc-activity-child parent.id="${testba2}" label="test testing" />
+		<sleep seconds="5" />
+		<rtc-activity-child parent.id="${testba2}" label="test compiling" />
+		<sleep seconds="5" />
+		<rtc-activity-child parent.id="${testba2}" label="test packaging" />
+		<sleep seconds="5" />
+		<rtc-complete-activity activity.id.property="${testba2}" />
+	</target>
+
+	<target name="test-ba3">
+		<echo>Simple test for an activity that does not autocomplete.</echo>
+		<property name="testba3Id" value="" />
+		<startBuildActivity activityIdProperty="testba3Id" label="Testing BA 3" buildResultUUID="${buildResultUuid}"
+			repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" autoComplete="false" verbose="true"  />
+		<sleep seconds="5" />
+		<completeBuildActivity repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" activityId="${testba3Id}" verbose="true" buildResultUUID="${buildResultUUID}" />
+
+	</target>
+
+	<target name="test-ba4">
+		<echo>Activity test with parent child relationship.</echo>
+		<startBuildActivity label="Compiling Bar" activityIdProperty="compilingBarActivityId" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+		<startBuildActivity label="compiling bar.A" parentActivityId="${compilingBarActivityId}" autocomplete="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+		<startBuildActivity label="compiling bar.B" parentActivityId="${compilingBarActivityId}" autocomplete="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+		<completeBuildActivity activityId="${compilingBarActivityId}" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+	</target>
+
+
+	<!-- publishing Logs -->
+	<target name="test-publish">
+		<logPublisher label="Another build log" filePath="generic-build.xml" verbose="true" buildResultUUID="${buildResultUuid}" repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}" />
+	</target>
+
+	<target name="test-links" depends="test-linkartifact,test-linkPublisher" >
+		
+	</target>
+	
+	<property name="link.url" value="file:////gebwin7/tmp/" />
+	<property name="link.label" value="gebwin7 unc share" />
+	
+	<!-- publishing link artifact -->
+	<target name="test-linkartifact">
+		<artifactLinkPublisher
+			repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}"
+			buildResultUUID="${buildResultUuid}"
+			label="${link.label} - artifactLinkPublisher"
+			url="${link.url}"
+			verbose="true" />
+	</target>
+
+	<target name="test-linkPublisher" >
+		<linkPublisher
+				repositoryAddress="${repositoryAddress}" userId="${userId}" password="${password}"
+				buildResultUUID="${buildResultUUID}"
+				label="${link.label} - linkPublisher"
+				url="${link.url}" />
+	</target>
+	
+
+
+	
+<!-- Macro Definitions -->	
+	
+	<!-- <rtc-accept workspace.name="RTC Build Team Workspace" />	-->	
+	<macrodef name="rtc-accept">
+		<attribute name="workspace.name" default="" />
+		<sequential>
+			<tstamp>
+				<format property="TODAY" pattern="yyyy-MM-dd HH:mm:ss" />
+			</tstamp>
+
+			<teamAccept repositoryAddress="${repositoryAddress}"
+				userId="${userId}" password="${password}" 
+				workspaceName="@{workspace.name}" verbose="true" buildResultUUID="${buildResultUuid}"
+				snapshotName="${buildDefinitionId}_${TODAY}" changeSetFile="changes.txt" />
+
+			<workItemPublisher repositoryAddress="${repositoryAddress}"
+				userId="${userId}" password="${password}" buildResultUUID="${buildResultUuid}"
+				filePath="changes.txt" />
+
+			<delete file="changes.txt" />
+		</sequential>
+	</macrodef>	
+	
+
+</project>
