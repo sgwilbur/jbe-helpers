@@ -1,0 +1,80 @@
+<project name="test" >
+
+
+
+<target name="default">
+        <!-- Replace these with your real credentials. -->
+        <property name="userId" value="ADMIN"/>
+        <property name="password" value="ADMIN"/>
+
+        <startBuildActivity
+                label="compiling..."
+                autoComplete="true"
+                verbose="true"                
+                buildResultUUID="${buildResultUUID}"
+                repositoryAddress="${repositoryAddress}"
+                userId="${userId}"
+                password="${password}"/>
+            
+        <sleep seconds="5"/>
+            
+        <startBuildActivity
+                label="testing..."
+                autoComplete="true"
+                verbose="true"                
+                buildResultUUID="${buildResultUUID}"
+                repositoryAddress="${repositoryAddress}"
+                userId="${userId}"
+                password="${password}"/>
+
+        <sleep seconds="5"/>
+
+        <startBuildActivity
+                label="packaging..."
+                autoComplete="true"
+                verbose="true"                
+                buildResultUUID="${buildResultUUID}"
+                repositoryAddress="${repositoryAddress}"
+                userId="${userId}"
+                password="${password}"/>
+
+        <sleep seconds="5"/>
+
+    </target>
+    
+    
+    <!-- publishing Logs -->
+        <target name="default">
+        <!-- Replace these with your real credentials. -->
+        <property name="userId" value="ADMIN"/>
+        <property name="password" value="ADMIN"/>
+
+        <logPublisher
+                label="Another build log"
+                filePath="path to log file"
+                verbose="true"                
+                buildResultUUID="${buildResultUUID}"
+                repositoryAddress="${repositoryAddress}"
+                userId="${userId}"
+                password="${password}"/>
+            
+    </target>
+
+<!-- publishing artifacts -->
+<target name="default">
+        <!-- Replace these with your real credentials. -->
+        <property name="userId" value="ADMIN"/>
+        <property name="password" value="ADMIN"/>
+
+        <artifactLinkPublisher
+                label="A download"
+                url="ftp://your-built-file.zip"
+                verbose="true"                
+                buildResultUUID="${buildResultUUID}"
+                repositoryAddress="${repositoryAddress}"
+                userId="${userId}"
+                password="${password}"/>
+</target>            
+
+
+</project>
